@@ -25,7 +25,7 @@ fastq2 <- list.files(path= './raw_data', pattern = "*.2.fq.gz$", full.names = TR
 
 fastqc(fq.dir = base_dir, qc.dir = "./data", threads = 4)
 
-#building index file using Rsubread. fasta.fa is genomic fasta from NCBI ASM1946012v1
+#building index file using Rsubread. fasta.fa is genomic fasta from NZ_JAHDTB000000000.1
 buildindex(basename="./index/cv017", reference="./genomic/fasta.fa")
 
 
