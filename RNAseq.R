@@ -36,13 +36,7 @@ Rsubread::align(index = "./index/cv017",
       type = "rna",
       input_format = "gzFASTQ",
       output_format = "BAM",
-      PE_orientation = "rf",
-      nthreads = 6 )
-
-
-#putting bam files in a variable
-
-bam.files <- list.files("./raw_data", pattern = "BAM$")
+      PE_orientation = "rf")
 
 
 fc <- Rsubread::featureCounts(c("./raw_data/C601_1.fq.gz.subread.BAM",
@@ -95,10 +89,10 @@ y$samples$group <- group
 #Filtering lowly expressed genes. Looking at counts per million and removing 
 #all genes that have CPM of less than 1. Then we filtered out genes which has
 #CPM of less than 3 in 3 or less sample.
-myCPM <- cpm(countdata)
+CPM_sample <- cpm(countdata)
 
-thresh <- myCPM > 1
-keep <- rowSums(thresh) >= 3
+threshold <- CPM_sample > 1
+keep <- rowSums(threshold) >= 3
 logcounts <- cpm(y,log=TRUE)
 
 #Normalining for composition bias
@@ -115,29 +109,29 @@ v <- voom(y,design,plot = TRUE)
 fit <- lmFit(v)
 
 #Making contrast matrix to compare between groups
-cont.matrix1 <- makeContrasts(C6VSNO=C6.2 - None.2,levels=design)
-cont.matrix2 <- makeContrasts(C8VSNO=C8.2 - None.2,levels=design)
+contrast_matrix1 <- makeContrasts(C6VSNO=C6.2 - None.2,levels=design)
+contrast_matrix2 <- makeContrasts(C8VSNO=C8.2 - None.2,levels=design)
 
 #apply the contrasts matrix to the fit object from limma package
-fit.cont1 <- contrasts.fit(fit, cont.matrix1)
-fit.cont2 <- contrasts.fit(fit, cont.matrix2)
+fitted_contrast1 <- contrasts.fit(fit, contrast_matrix1)
+fitted_contrast2 <- contrasts.fit(fit, contrast_matrix2)
 
 # empirical Bayes shrinkage on the variances, and estimates 
 # moderated t-statistics and the associated p-values
-fit.cont1 <- eBayes(fit.cont1)
-fit.cont2 <- eBayes(fit.cont2)
+fitted_contrast1 <- eBayes(fitted_contrast1)
+fitted_contrast2 <- eBayes(fitted_contrast2)
 
 #Calculating P-values based on logFC cutoff of 2
-fit.treat1 <- treat(fit.cont1,lfc=2)
-fit.treat2 <- treat(fit.cont2,lfc=2)
+filtered_treated1 <- treat(fitted_contrast1,lfc=2)
+filtered_treated2 <- treat(fitted_contrast2,lfc=2)
 
 #Generating the table 
-C6vsNone <- topTable(fit.treat1,coef=1,number = 4530, sort.by="p")
-C8vsNone <- topTable(fit.treat2,coef=1,number = 4530, sort.by="p")
+C6vsNone <- topTable(filtered_treated1,coef=1,number = 4530, sort.by="p")
+C8vsNone <- topTable(filtered_treated2,coef=1,number = 4530, sort.by="p")
 
 #Exporting the table
 write.csv(C6vsNone, 'C6up.csv')
-write.csv(C6vsNone, 'C8up.csv')
+write.csv(C8vsNone, 'C8up.csv')
 
 #We manually removed all genes that had Log2 fold change of 
 # less than 2 and P>0.05 
